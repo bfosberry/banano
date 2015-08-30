@@ -17,26 +17,28 @@ func main() {
 	if err := repo.Create(t1); err != nil {
 		log.Fatal(err)
 	}
+	log.Printf("Created %+v\n", t1.Data)
 
 	if t2, err := repo.Get(t1.ID); err != nil {
 		log.Fatal(err)
 	} else {
-		log.Println(t2.Data)
+		log.Printf("Got %+v\n", t2.Data)
 	}
 
 	if tList, err := repo.List(); err != nil {
 		log.Fatal(err)
 	} else {
-		log.Println(len(tList))
+		log.Printf("Listed %d items\n", len(tList))
 	}
 
 	if err := repo.Delete(t1); err != nil {
 		log.Fatal(err)
 	}
+	log.Printf("Deleted %+v\n", t1.Data)
 
 	if tList, err := repo.List(); err != nil {
 		log.Fatal(err)
 	} else {
-		log.Println(len(tList))
+		log.Printf("Listed %d items\n", len(tList))
 	}
 }
