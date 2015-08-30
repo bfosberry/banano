@@ -1,11 +1,14 @@
 package nano
 
 import (
+	"encoding/json"
 	"errors"
 	"log"
 
 	"github.com/docker/libchan"
 )
+
+type SenderFunc func() (libchan.Sender, error)
 
 type Thingey struct {
 	ID   string
@@ -14,7 +17,8 @@ type Thingey struct {
 
 type Request struct {
 	ResponseChan libchan.Sender
-	Payload      interface{}
+	Payload      []byte
+	Type         string
 }
 
 type ThingeyCreateRequest struct {
@@ -33,7 +37,8 @@ type ThingeyListRequest struct {
 }
 
 type Response struct {
-	Payload interface{}
+	Payload []byte
+	Type    string
 	Err     error
 }
 
@@ -52,57 +57,83 @@ type ThingeyListResponse struct {
 }
 
 type ThingeyAdapter interface {
-	Listen()
+	Listen(libchan.Receiver) error
 }
 
 type thingeyAdapter struct {
-	receiver libchan.Receiver
 	thingeys map[string]*Thingey
 }
 
-func NewThingeyAdapter(receiver libchan.Receiver) ThingeyAdapter {
+func NewThingeyAdapter() ThingeyAdapter {
 	return &thingeyAdapter{
-		receiver: receiver,
 		thingeys: map[string]*Thingey{},
 	}
 }
 
-func (adapter *thingeyAdapter) Listen() {
+func (adapter *thingeyAdapter) Listen(receiver libchan.Receiver) error {
 	request := &Request{}
 	response := &Response{}
-	err := adapter.receiver.Receive(request)
+	err := receiver.Receive(request)
 	if err != nil {
 		log.Print(err)
-		return
+		return err
 	}
 
-	payload := request.Payload
-	switch payload := payload.(type) {
-	case *ThingeyCreateRequest:
-		log.Println("received create request")
+	switch request.Type {
+	case "ThingeyCreateRequest":
+		payload := &ThingeyCreateRequest{}
+		if err = json.Unmarshal(request.Payload, payload); err != nil {
+			return err
+		}
 		adapter.thingeys[payload.Thingey.ID] = payload.Thingey
-		response.Payload = &ThingeyCreateResponse{}
-	case *ThingeyDeleteRequest:
-		log.Println("received delete request")
+		response.Payload, err = json.Marshal(&ThingeyCreateResponse{})
+		response.Type = "ThingeyCreateResponse"
+		if err != nil {
+			return err
+		}
+	case "ThingeyDeleteRequest":
+		payload := &ThingeyDeleteRequest{}
+		if err = json.Unmarshal(request.Payload, payload); err != nil {
+			return err
+		}
 		delete(adapter.thingeys, payload.Thingey.ID)
-		response.Payload = &ThingeyDeleteResponse{}
-	case *ThingeyGetRequest:
-		log.Println("received get request")
-		response.Payload = &ThingeyGetResponse{
+		response.Payload, err = json.Marshal(&ThingeyDeleteResponse{})
+		response.Type = "ThingeyDeleteResponse"
+		if err != nil {
+			return err
+		}
+	case "ThingeyGetRequest":
+		payload := &ThingeyGetRequest{}
+		if err = json.Unmarshal(request.Payload, payload); err != nil {
+			return err
+		}
+		resp := &ThingeyGetResponse{
 			Thingey: adapter.thingeys[payload.ThingeyID],
 		}
-	case *ThingeyListRequest:
-		log.Println("received list request")
+		response.Payload, err = json.Marshal(resp)
+		response.Type = "ThingeyGetResponse"
+		if err != nil {
+			return err
+		}
+	case "ThingeyListRequest":
+		payload := &ThingeyListRequest{}
+		if err = json.Unmarshal(request.Payload, payload); err != nil {
+			return err
+		}
 		thingeys := []*Thingey{}
 		for _, t := range adapter.thingeys {
 			thingeys = append(thingeys, t)
 		}
-		response.Payload = &ThingeyListResponse{
+		resp := &ThingeyListResponse{
 			Thingeys: thingeys,
 		}
+		response.Payload, err = json.Marshal(resp)
+		response.Type = "ThingeyListResponse"
+		if err != nil {
+			return err
+		}
 	default:
-		log.Println("unknown request type")
 		response.Err = errors.New("unknown request type")
 	}
-	request.ResponseChan.Send(response)
+	return request.ResponseChan.Send(response)
 }

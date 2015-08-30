@@ -1,7 +1,6 @@
 package nano
 
 import (
-	"crypto/tls"
 	"log"
 	"net"
 
@@ -12,11 +11,14 @@ import (
 func NewLocalRepository() ThingeyRepository {
 	receiver, remoteSender := libchan.Pipe()
 	remoteReceiver, sender := libchan.Pipe()
-	repo := NewThingeyRepository(sender, receiver, remoteSender)
-	adapter := NewThingeyAdapter(remoteReceiver)
+	senderFunc := func() (libchan.Sender, error) {
+		return sender, nil
+	}
+	repo := NewThingeyRepository(senderFunc, receiver, remoteSender)
+	adapter := NewThingeyAdapter()
 	go func() {
 		for {
-			adapter.Listen()
+			adapter.Listen(remoteReceiver)
 		}
 	}()
 	return repo
@@ -26,7 +28,7 @@ func NewRemoteRepository(remoteURL string) ThingeyRepository {
 	receiver, remoteSender := libchan.Pipe()
 	var client net.Conn
 	var err error
-	client, err = tls.Dial("tcp", remoteURL, &tls.Config{InsecureSkipVerify: true})
+	client, err = net.Dial("tcp", remoteURL)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -35,9 +37,9 @@ func NewRemoteRepository(remoteURL string) ThingeyRepository {
 	if err != nil {
 		log.Fatal(err)
 	}
-	sender, err := transport.NewSendChannel()
+	senderFunc := transport.NewSendChannel
 	if err != nil {
 		log.Fatal(err)
 	}
-	return NewThingeyRepository(sender, receiver, remoteSender)
+	return NewThingeyRepository(senderFunc, receiver, remoteSender)
 }

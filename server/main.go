@@ -21,15 +21,16 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Listening")
 
 	tl, err := spdy.NewTransportListener(listener, spdy.NoAuthenticator)
 	if err != nil {
 		log.Fatal(err)
 	}
-
+	adapter := nano.NewThingeyAdapter()
+	if err != nil {
+		log.Fatal(err)
+	}
 	for {
-		fmt.Println("Accept loop")
 		t, err := tl.AcceptTransport()
 		if err != nil {
 			log.Print(err)
@@ -38,14 +39,20 @@ func main() {
 
 		go func() {
 			for {
-				fmt.Println("Receive loop")
 				receiver, err := t.WaitReceiveChannel()
 				if err != nil {
 					log.Print(err)
 					break
 				}
 
-				nano.NewThingeyAdapter(receiver).Listen()
+				go func() {
+					for {
+						err := adapter.Listen(receiver)
+						if err != nil {
+							break
+						}
+					}
+				}()
 			}
 		}()
 	}
