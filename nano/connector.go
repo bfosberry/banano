@@ -37,9 +37,5 @@ func NewRemoteRepository(remoteURL string) ThingeyRepository {
 	if err != nil {
 		log.Fatal(err)
 	}
-	senderFunc := transport.NewSendChannel
-	if err != nil {
-		log.Fatal(err)
-	}
-	return NewThingeyRepository(senderFunc, receiver, remoteSender)
+	return NewThingeyRepository(transport.NewSendChannel, receiver, remoteSender)
 }

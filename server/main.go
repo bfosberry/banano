@@ -27,9 +27,6 @@ func main() {
 		log.Fatal(err)
 	}
 	adapter := nano.NewThingeyAdapter()
-	if err != nil {
-		log.Fatal(err)
-	}
 	for {
 		t, err := tl.AcceptTransport()
 		if err != nil {

@@ -1,14 +1,20 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"os"
 
 	"github.com/bfosberry/banano/nano"
 )
 
 func main() {
 	log.Println("Starting..")
-	repo := nano.NewRemoteRepository("localhost:8080")
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	repo := nano.NewRemoteRepository(fmt.Sprintf("localhost:%s", port))
 
 	t1 := &nano.Thingey{
 		ID:   "1",
