@@ -10,11 +10,16 @@ import (
 
 func main() {
 	log.Println("Starting..")
+	ip := os.Getenv("IP")
+	if ip == "" {
+		ip = "localhost"
+	}
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
-	repo := nano.NewRemoteRepository(fmt.Sprintf("localhost:%s", port))
+	log.Printf("Connecting to %s:%s\n", ip, port)
+	repo := nano.NewRemoteRepository(fmt.Sprintf("%s:%s", ip, port))
 
 	t1 := &nano.Thingey{
 		ID:   "1",

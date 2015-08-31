@@ -17,7 +17,7 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
-	listener, err := net.Listen("tcp", fmt.Sprintf("localhost:%s", port))
+	listener, err := net.Listen("tcp", fmt.Sprintf(":%s", port))
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -1,0 +1,16 @@
+server:
+  build: ./
+  dockerfile: Dockerfile.server
+  expose:
+    - 8080
+client:
+  build: ./
+  dockerfile: Dockerfile.client
+  environment:
+    - IP=server
+    - PORT=8080
+  links:
+    - server
+local: 
+  build: ./
+  dockerfile: Dockerfile.local

@@ -63,11 +63,11 @@ Much of the work done here is around marhsalling and unmarhsalling data, rather 
 
 ## Local example
 
-To run the local example just run `go run cmd/main.go`. This will start up a local adapter, connect the repository to this adapter, and execute a set of actions against this repository.
+To run the local example just run `go run cmd/main.go`. This will start up a local adapter, connect the repository to this adapter, and execute a set of actions against this repository. You can also use compose to bring up this service: `docker-compose up local`.
 
 ## Remote example 
 
-To run the remote example, first start up the server with `go run server/main.go`. This will start an adapter listening on port 8080. Next start the client with `go run client/main.go`, which will create a repository connecting to the remote adapter on port 8080.
+To run the remote example, first start up the server with `go run server/main.go`. This will start an adapter listening on port 8080. Next start the client with `go run client/main.go`, which will create a repository connecting to the remote adapter on port 8080. You can also use compose to bring up this example: `docker-compose up client`.
 
 ## Conclusion
 
